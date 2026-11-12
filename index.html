@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smart Dokan - POS</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&display=swap" rel="stylesheet">
+<style>body{font-family:'Hind Siliguri',sans-serif}</style>
+</head>
+<body class="bg-[#f6f7f9]">
+<div class="flex h-screen">
+<div class="w-[260px] bg-white border-r p-5 flex flex-col">
+<div class="flex gap-2 items-center mb-8"><div class="w-10 h-10 bg-teal-600 rounded-xl flex items-center justify-center text-white">🏪</div><div><p class="font-bold">Smart Dokan</p><p class="text-xs">স্মার্ট দোকান</p></div></div>
+<nav class="space-y-1 flex-1">
+<button class="w-full text-left bg-teal-600 text-white p-3 rounded-xl">📊 ড্যাশবোর্ড</button>
+<button class="w-full text-left p-3 hover:bg-gray-100 rounded-xl">🧾 বিক্রয়</button>
+<button class="w-full text-left p-3 hover:bg-gray-100 rounded-xl">📦 পণ্য</button>
+</nav>
+<div class="p-3 bg-slate-900 text-white rounded-xl"><p class="text-xs">আজকের বিক্রি</p><p class="text-xl font-bold">৳ <span id="todaySale">0</span></p></div>
+</div>
+<div class="flex-1 flex flex-col p-4">
+<div class="grid grid-cols-4 gap-4 mb-4">
+<div class="bg-white p-4 rounded-2xl border-l-4 border-green-500"><p class="text-xs">আজকের বিক্রয়</p><p class="text-2xl font-bold">৳<span id="statSale">0</span></p></div>
+<div class="bg-white p-4 rounded-2xl border-l-4 border-blue-500"><p class="text-xs">মোট অর্ডার</p><p class="text-2xl font-bold" id="statOrder">0</p></div>
+<div class="bg-white p-4 rounded-2xl border-l-4 border-orange-400"><p class="text-xs">মোট পণ্য</p><p class="text-2xl font-bold" id="statProd">6</p></div>
+<div class="bg-white p-4 rounded-2xl border-l-4 border-red-500"><p class="text-xs">কম স্টক</p><p class="text-2xl font-bold">3</p></div>
+</div>
+<div class="flex gap-4 flex-1">
+<div class="flex-1 bg-white rounded-2xl p-4 flex flex-col">
+<div class="flex justify-between mb-4"><h2 class="text-xl font-bold">পণ্য তালিকা</h2><div class="flex gap-2"><input id="search" placeholder="পণ্য খুঁজুন..." class="border px-3 py-2 rounded-xl w-64"><button onclick="addProductPrompt()" class="bg-teal-600 text-white px-4 rounded-xl">+ নতুন পণ্য</button></div></div>
+<div id="productGrid" class="grid grid-cols-3 gap-4 overflow-y-auto"></div>
+</div>
+<div class="w-[380px] bg-white rounded-2xl p-5 flex flex-col shadow">
+<h2 class="font-bold text-lg">🛒 কার্ট / বিল <span id="invoiceNo">#1024</span></h2>
+<div id="cart" class="flex-1 mt-4 space-y-2 overflow-y-auto"></div>
+<div class="border-t pt-4 mt-2 space-y-2 text-sm">
+<div class="flex justify-between"><span>সাবটোটাল</span><span>৳ <span id="subtotal">0</span></span></div>
+<div class="flex justify-between"><span>ছাড়</span><input id="discount" type="number" value="0" class="w-16 border rounded px-2 text-right" oninput="calc()"></div>
+<div class="flex justify-between font-bold text-lg pt-2 border-t"><span>মোট</span><span class="text-teal-600">৳ <span id="grand">0</span></span></div>
+<button onclick="pay()" class="w-full bg-teal-600 text-white py-3 rounded-xl font-bold mt-3">✅ পরিশোধ করুন - নগদ</button>
+<button onclick="window.print()" class="w-full bg-gray-100 py-2 rounded-xl mt-2">🖨️ রশিদ প্রিন্ট</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<script>
+let products=[{id:1,name:'চাল (মিনিকেট)',price:65,stock:45,emoji:'🌾'},{id:2,name:'মসুর ডাল',price:120,stock:22,emoji:'🫘'},{id:3,name:'সয়াবিন তেল',price:180,stock:15,emoji:'🛢️'},{id:4,name:'ডিম',price:12,stock:60,emoji:'🥚'},{id:5,name:'চিনি',price:140,stock:30,emoji:'🍚'},{id:6,name:'লাক্স সাবান',price:55,stock:40,emoji:'🧼'}];
+let cart=[],todaySale=0,orders=0;
+function renderProducts(list=products){
+document.getElementById('productGrid').innerHTML=list.map(p=>`<div onclick="addToCart(${p.id})" class="border rounded-2xl p-4 hover:shadow-lg cursor-pointer"><div class="text-5xl text-center mb-2">${p.emoji}</div><p class="font-bold text-center">${p.name}</p><p class="text-center text-teal-600 font-bold">৳${p.price}</p><p class="text-center text-xs">স্টক: ${p.stock}</p><button class="w-full mt-2 border border-teal-600 text-teal-600 rounded-xl py-1 text-sm">+ কার্টে যোগ করুন</button></div>`).join('');}
+function addToCart(id){let p=products.find(x=>x.id==id);let c=cart.find(x=>x.id==id);if(c)c.qty++;else cart.push({...p,qty:1});renderCart();}
+function renderCart(){document.getElementById('cart').innerHTML=cart.length==0?'<p class=text-center text-gray-400 py-10>কার্ট খালি</p>':cart.map((c,i)=>`<div class="flex justify-between bg-gray-50 p-2 rounded-xl"><div><p class="font-semibold text-sm">${c.name}</p><p class="text-xs">${c.qty} x ৳${c.price}</p></div><div class="flex gap-1 items-center"><button onclick="changeQty(${i},-1)" class="w-6 h-6 bg-gray-200 rounded">-</button><span>${c.qty}</span><button onclick="changeQty(${i},1)" class="w-6 h-6 bg-gray-200 rounded">+</button></div></div>`).join('');calc();}
+function changeQty(i,d){cart[i].qty+=d;if(cart[i].qty<=0)cart.splice(i,1);renderCart();}
+function calc(){let sub=cart.reduce((s,c)=>s+c.price*c.qty,0);let disc=parseInt(document.getElementById('discount').value||0);document.getElementById('subtotal').innerText=sub;document.getElementById('grand').innerText=sub-disc;}
+function pay(){if(cart.length==0)return alert('কার্ট খালি!');let total=parseInt(document.getElementById('grand').innerText);todaySale+=total;orders++;document.getElementById('todaySale').innerText=todaySale;document.getElementById('statSale').innerText=todaySale;document.getElementById('statOrder').innerText=orders;alert('পেমেন্ট সফল! ৳'+total);cart=[];renderCart();document.getElementById('discount').value=0;calc();}
+function addProductPrompt(){let n=prompt('পণ্যের নাম?');if(!n)return;let pr=parseInt(prompt('দাম?'));if(!pr)return;products.push({id:Date.now(),name:n,price:pr,stock:50,emoji:'📦'});renderProducts();}
+document.getElementById('search').addEventListener('input',e=>{let q=e.target.value.toLowerCase();renderProducts(products.filter(p=>p.name.toLowerCase().includes(q)));});
+renderProducts();calc();
+</script>
+</body>
+</html>
