@@ -1,62 +1,100 @@
 <!DOCTYPE html>
 <html lang="bn">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Smart Dokan - POS</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smart Dokan POS - V2 Due Khata</title>
 <script src="https://cdn.tailwindcss.com"></script>
-<link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>body{font-family:'Hind Siliguri',sans-serif}</style>
 </head>
-<body class="bg-[#f6f7f9]">
-<div class="flex h-screen">
-<div class="w-[260px] bg-white border-r p-5 flex flex-col">
-<div class="flex gap-2 items-center mb-8"><div class="w-10 h-10 bg-teal-600 rounded-xl flex items-center justify-center text-white">🏪</div><div><p class="font-bold">Smart Dokan</p><p class="text-xs">স্মার্ট দোকান</p></div></div>
-<nav class="space-y-1 flex-1">
-<button class="w-full text-left bg-teal-600 text-white p-3 rounded-xl">📊 ড্যাশবোর্ড</button>
-<button class="w-full text-left p-3 hover:bg-gray-100 rounded-xl">🧾 বিক্রয়</button>
-<button class="w-full text-left p-3 hover:bg-gray-100 rounded-xl">📦 পণ্য</button>
-</nav>
-<div class="p-3 bg-slate-900 text-white rounded-xl"><p class="text-xs">আজকের বিক্রি</p><p class="text-xl font-bold">৳ <span id="todaySale">0</span></p></div>
+<body class="bg-gray-100">
+<div class="max-w-7xl mx-auto p-2 md:p-4">
+  <!-- Header -->
+  <div class="bg-white p-3 rounded-xl shadow flex justify-between items-center mb-3">
+    <h1 class="text-xl font-bold">🛒 Smart Dokan <span class="text-green-600">V2</span></h1>
+    <div class="flex gap-2">
+      <button onclick="showTab('pos')" id="btn-pos" class="px-4 py-2 bg-black text-white rounded-lg">বিক্রয়</button>
+      <button onclick="showTab('due')" id="btn-due" class="px-4 py-2 bg-white border rounded-lg">বাকি খাতা <span id="due-count" class="bg-red-500 text-white px-2 rounded-full text-xs">0</span></button>
+      <button onclick="showTab('report')" id="btn-report" class="px-4 py-2 bg-white border rounded-lg">রিপোর্ট</button>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-3">
+    <!-- Products -->
+    <div class="lg:col-span-2 bg-white p-3 rounded-xl shadow">
+      <div class="flex gap-2 mb-3">
+        <input id="search" oninput="renderProducts()" placeholder="প্রোডাক্ট খুঁজুন..." class="flex-1 p-2 border rounded-lg">
+        <button onclick="document.getElementById('addModal').classList.remove('hidden')" class="px-4 py-2 bg-green-600 text-white rounded-lg">+ পণ্য</button>
+      </div>
+      <div id="products" class="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-[70vh] overflow-auto"></div>
+    </div>
+
+    <!-- Cart / POS -->
+    <div id="tab-pos" class="bg-white p-3 rounded-xl shadow h-fit">
+      <h2 class="font-bold text-lg mb-2">বিল <span id="cart-count">0 টি</span></h2>
+      <div id="cart" class="space-y-2 min-h-[150px]"></div>
+      <div class="border-t mt-3 pt-3 space-y-2">
+        <div class="flex justify-between"><span>মোট:</span><span id="total" class="font-bold">০ ৳</span></div>
+        <input id="customer" placeholder="কাস্টমারের নাম (ঐচ্ছিক)" class="w-full p-2 border rounded-lg">
+        <div class="grid grid-cols-2 gap-2">
+          <button onclick="checkout('cash')" class="py-3 bg-green-600 text-white rounded-xl font-bold">নগদ বিক্রয় ✅</button>
+          <button onclick="checkout('due')" class="py-3 bg-orange-500 text-white rounded-xl font-bold">বাকিতে দিন 📒</button>
+        </div>
+        <button onclick="clearCart()" class="w-full py-2 text-sm text-red-500">কার্ট খালি করুন</button>
+      </div>
+    </div>
+
+    <!-- Due Tab -->
+    <div id="tab-due" class="hidden bg-white p-3 rounded-xl shadow h-fit">
+      <h2 class="font-bold text-lg mb-2">বাকি খাতা</h2>
+      <div id="due-list" class="space-y-2"></div>
+    </div>
+
+    <!-- Report Tab -->
+    <div id="tab-report" class="hidden bg-white p-3 rounded-xl shadow h-fit">
+      <h2 class="font-bold text-lg mb-2">আজকের হিসাব</h2>
+      <div class="grid grid-cols-2 gap-2 mb-3">
+        <div class="bg-green-50 p-3 rounded-xl"><p class="text-sm">আজকের বিক্রি</p><p id="today-sell" class="text-xl font-bold">০ ৳</p></div>
+        <div class="bg-orange-50 p-3 rounded-xl"><p class="text-sm">মোট বাকি</p><p id="total-due" class="text-xl font-bold">০ ৳</p></div>
+      </div>
+      <div id="sales-history" class="space-y-2 max-h-[50vh] overflow-auto"></div>
+    </div>
+  </div>
 </div>
-<div class="flex-1 flex flex-col p-4">
-<div class="grid grid-cols-4 gap-4 mb-4">
-<div class="bg-white p-4 rounded-2xl border-l-4 border-green-500"><p class="text-xs">আজকের বিক্রয়</p><p class="text-2xl font-bold">৳<span id="statSale">0</span></p></div>
-<div class="bg-white p-4 rounded-2xl border-l-4 border-blue-500"><p class="text-xs">মোট অর্ডার</p><p class="text-2xl font-bold" id="statOrder">0</p></div>
-<div class="bg-white p-4 rounded-2xl border-l-4 border-orange-400"><p class="text-xs">মোট পণ্য</p><p class="text-2xl font-bold" id="statProd">6</p></div>
-<div class="bg-white p-4 rounded-2xl border-l-4 border-red-500"><p class="text-xs">কম স্টক</p><p class="text-2xl font-bold">3</p></div>
+
+<!-- Add Product Modal -->
+<div id="addModal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center p-4">
+  <div class="bg-white p-5 rounded-xl w-full max-w-sm">
+    <h3 class="font-bold mb-3">নতুন পণ্য যোগ করুন</h3>
+    <input id="p-name" placeholder="নাম: যেমন চাল" class="w-full p-2 border rounded mb-2">
+    <input id="p-price" type="number" placeholder="বিক্রয় দাম" class="w-full p-2 border rounded mb-2">
+    <input id="p-stock" type="number" placeholder="স্টক পরিমাণ" class="w-full p-2 border rounded mb-3">
+    <div class="flex gap-2">
+      <button onclick="addProduct()" class="flex-1 py-2 bg-black text-white rounded">সেভ করুন</button>
+      <button onclick="document.getElementById('addModal').classList.add('hidden')" class="flex-1 py-2 border rounded">বাতিল</button>
+    </div>
+  </div>
 </div>
-<div class="flex gap-4 flex-1">
-<div class="flex-1 bg-white rounded-2xl p-4 flex flex-col">
-<div class="flex justify-between mb-4"><h2 class="text-xl font-bold">পণ্য তালিকা</h2><div class="flex gap-2"><input id="search" placeholder="পণ্য খুঁজুন..." class="border px-3 py-2 rounded-xl w-64"><button onclick="addProductPrompt()" class="bg-teal-600 text-white px-4 rounded-xl">+ নতুন পণ্য</button></div></div>
-<div id="productGrid" class="grid grid-cols-3 gap-4 overflow-y-auto"></div>
-</div>
-<div class="w-[380px] bg-white rounded-2xl p-5 flex flex-col shadow">
-<h2 class="font-bold text-lg">🛒 কার্ট / বিল <span id="invoiceNo">#1024</span></h2>
-<div id="cart" class="flex-1 mt-4 space-y-2 overflow-y-auto"></div>
-<div class="border-t pt-4 mt-2 space-y-2 text-sm">
-<div class="flex justify-between"><span>সাবটোটাল</span><span>৳ <span id="subtotal">0</span></span></div>
-<div class="flex justify-between"><span>ছাড়</span><input id="discount" type="number" value="0" class="w-16 border rounded px-2 text-right" oninput="calc()"></div>
-<div class="flex justify-between font-bold text-lg pt-2 border-t"><span>মোট</span><span class="text-teal-600">৳ <span id="grand">0</span></span></div>
-<button onclick="pay()" class="w-full bg-teal-600 text-white py-3 rounded-xl font-bold mt-3">✅ পরিশোধ করুন - নগদ</button>
-<button onclick="window.print()" class="w-full bg-gray-100 py-2 rounded-xl mt-2">🖨️ রশিদ প্রিন্ট</button>
-</div>
-</div>
-</div>
-</div>
-</div>
+
 <script>
-let products=[{id:1,name:'চাল (মিনিকেট)',price:65,stock:45,emoji:'🌾'},{id:2,name:'মসুর ডাল',price:120,stock:22,emoji:'🫘'},{id:3,name:'সয়াবিন তেল',price:180,stock:15,emoji:'🛢️'},{id:4,name:'ডিম',price:12,stock:60,emoji:'🥚'},{id:5,name:'চিনি',price:140,stock:30,emoji:'🍚'},{id:6,name:'লাক্স সাবান',price:55,stock:40,emoji:'🧼'}];
-let cart=[],todaySale=0,orders=0;
-function renderProducts(list=products){
-document.getElementById('productGrid').innerHTML=list.map(p=>`<div onclick="addToCart(${p.id})" class="border rounded-2xl p-4 hover:shadow-lg cursor-pointer"><div class="text-5xl text-center mb-2">${p.emoji}</div><p class="font-bold text-center">${p.name}</p><p class="text-center text-teal-600 font-bold">৳${p.price}</p><p class="text-center text-xs">স্টক: ${p.stock}</p><button class="w-full mt-2 border border-teal-600 text-teal-600 rounded-xl py-1 text-sm">+ কার্টে যোগ করুন</button></div>`).join('');}
-function addToCart(id){let p=products.find(x=>x.id==id);let c=cart.find(x=>x.id==id);if(c)c.qty++;else cart.push({...p,qty:1});renderCart();}
-function renderCart(){document.getElementById('cart').innerHTML=cart.length==0?'<p class=text-center text-gray-400 py-10>কার্ট খালি</p>':cart.map((c,i)=>`<div class="flex justify-between bg-gray-50 p-2 rounded-xl"><div><p class="font-semibold text-sm">${c.name}</p><p class="text-xs">${c.qty} x ৳${c.price}</p></div><div class="flex gap-1 items-center"><button onclick="changeQty(${i},-1)" class="w-6 h-6 bg-gray-200 rounded">-</button><span>${c.qty}</span><button onclick="changeQty(${i},1)" class="w-6 h-6 bg-gray-200 rounded">+</button></div></div>`).join('');calc();}
-function changeQty(i,d){cart[i].qty+=d;if(cart[i].qty<=0)cart.splice(i,1);renderCart();}
-function calc(){let sub=cart.reduce((s,c)=>s+c.price*c.qty,0);let disc=parseInt(document.getElementById('discount').value||0);document.getElementById('subtotal').innerText=sub;document.getElementById('grand').innerText=sub-disc;}
-function pay(){if(cart.length==0)return alert('কার্ট খালি!');let total=parseInt(document.getElementById('grand').innerText);todaySale+=total;orders++;document.getElementById('todaySale').innerText=todaySale;document.getElementById('statSale').innerText=todaySale;document.getElementById('statOrder').innerText=orders;alert('পেমেন্ট সফল! ৳'+total);cart=[];renderCart();document.getElementById('discount').value=0;calc();}
-function addProductPrompt(){let n=prompt('পণ্যের নাম?');if(!n)return;let pr=parseInt(prompt('দাম?'));if(!pr)return;products.push({id:Date.now(),name:n,price:pr,stock:50,emoji:'📦'});renderProducts();}
-document.getElementById('search').addEventListener('input',e=>{let q=e.target.value.toLowerCase();renderProducts(products.filter(p=>p.name.toLowerCase().includes(q)));});
-renderProducts();calc();
+let products = JSON.parse(localStorage.getItem('sd_products') || '[{"id":1,"name":"চাল (মিনিকেট)","price":72,"stock":100},{"id":2,"name":"ডাল","price":130,"stock":50},{"id":3,"name":"তেল (১ লিটার)","price":185,"stock":30},{"id":4,"name":"চিনি","price":140,"stock":40},{"id":5,"name":"লবণ","price":38,"stock":60},{"id":6,"name":"ডিম (১ হালি)","price":48,"stock":20}]');
+let cart = [];
+let dues = JSON.parse(localStorage.getItem('sd_dues') || '[]');
+let sales = JSON.parse(localStorage.getItem('sd_sales') || '[]');
+
+function save(){localStorage.setItem('sd_products',JSON.stringify(products));localStorage.setItem('sd_dues',JSON.stringify(dues));localStorage.setItem('sd_sales',JSON.stringify(sales));}
+function showTab(t){document.getElementById('tab-pos').classList.add('hidden');document.getElementById('tab-due').classList.add('hidden');document.getElementById('tab-report').classList.add('hidden');document.getElementById('tab-'+t).classList.remove('hidden');document.getElementById('btn-pos').className=t=='pos'?'px-4 py-2 bg-black text-white rounded-lg':'px-4 py-2 bg-white border rounded-lg';document.getElementById('btn-due').className=t=='due'?'px-4 py-2 bg-black text-white rounded-lg':'px-4 py-2 bg-white border rounded-lg';document.getElementById('btn-report').className=t=='report'?'px-4 py-2 bg-black text-white rounded-lg':'px-4 py-2 bg-white border rounded-lg'; if(t=='due') renderDue(); if(t=='report') renderReport();}
+function renderProducts(){let s=document.getElementById('search').value.toLowerCase();let c=document.getElementById('products');c.innerHTML='';products.filter(p=>p.name.toLowerCase().includes(s)).forEach(p=>{c.innerHTML+=`<div class="border p-3 rounded-xl hover:shadow"><p class="font-semibold">${p.name}</p><p class="text-sm text-gray-500">স্টক: ${p.stock}</p><div class="flex justify-between items-center mt-2"><span class="font-bold text-green-600">${p.price}৳</span><button onclick="addToCart(${p.id})" class="px-3 py-1 bg-black text-white rounded-lg text-sm">যোগ</button></div></div>`})}
+function addToCart(id){let p=products.find(x=>x.id==id);if(p.stock<=0)return alert('স্টক শেষ!');let c=cart.find(x=>x.id==id);if(c){if(c.qty>=p.stock)return alert('স্টক এর বেশি নেওয়া যাবে না');c.qty++}else cart.push({...p,qty:1});renderCart()}
+function renderCart(){let d=document.getElementById('cart');d.innerHTML='';let tot=0;cart.forEach((i,idx)=>{tot+=i.price*i.qty;d.innerHTML+=`<div class="flex justify-between bg-gray-50 p-2 rounded-lg"><span>${i.name} x${i.qty}</span><div class="flex gap-2"><span class="font-bold">${i.price*i.qty}৳</span><button onclick="cart.splice(${idx},1);renderCart()" class="text-red-500">x</button></div></div>`});document.getElementById('total').innerText=tot+' ৳';document.getElementById('cart-count').innerText=cart.length+' টি'}
+function clearCart(){cart=[];renderCart()}
+function checkout(type){if(cart.length==0)return alert('কার্ট খালি!');let tot=cart.reduce((s,i)=>s+i.price*i.qty,0);let cust=document.getElementById('customer').value||'সাধারণ কাস্টমার';let time=new Date().toLocaleString('bn-BD');if(type=='due'){if(!document.getElementById('customer').value)return alert('বাকির জন্য কাস্টমারের নাম লিখতে হবে!');dues.push({id:Date.now(),customer:cust,items:[...cart],total:tot,time,paid:false});}sales.push({customer:cust,total:tot,type,time});cart.forEach(c=>{let p=products.find(x=>x.id==c.id);p.stock-=c.qty});save();clearCart();document.getElementById('customer').value='';renderProducts();renderDue();alert(type=='due'?'বাকি খাতায় যোগ হয়েছে 📒':'বিক্রয় সম্পন্ন ✅');}
+function addProduct(){let n=document.getElementById('p-name').value,p=document.getElementById('p-price').value,s=document.getElementById('p-stock').value;if(!n||!p)return alert('নাম ও দাম দিন');products.push({id:Date.now(),name:n,price:+p,stock:+s||0});save();renderProducts();document.getElementById('addModal').classList.add('hidden');document.getElementById('p-name').value='';document.getElementById('p-price').value='';document.getElementById('p-stock').value='';}
+function renderDue(){let d=document.getElementById('due-list');d.innerHTML=dues.length==0?'<p class="text-center text-gray-400 py-10">কোনো বাকি নেই</p>':'';let total=0;dues.forEach(item=>{if(!item.paid)total+=item.total;d.innerHTML+=`<div class="border p-3 rounded-xl ${item.paid?'bg-green-50':''}"><div class="flex justify-between"><b>${item.customer}</b><span class="${item.paid?'text-green-600':'text-red-600'} font-bold">${item.total}৳ ${item.paid?'✓ পরিশোধ':'বাকি'}</span></div><p class="text-xs text-gray-500">${item.time} - ${item.items.map(i=>i.name+' x'+i.qty).join(', ')}</p>${!item.paid?`<button onclick="payDue(${item.id})" class="mt-2 w-full py-1 bg-green-600 text-white rounded">পরিশোধ হয়েছে</button>`:''}</div>`});document.getElementById('due-count').innerText=dues.filter(x=>!x.paid).length;document.getElementById('total-due').innerText=total+' ৳';}
+function payDue(id){let d=dues.find(x=>x.id==id);d.paid=true;save();renderDue();}
+function renderReport(){let today=new Date().toLocaleDateString('bn-BD');let tSales=sales.filter(s=>s.time.includes(today.split(',')[0]) || true);let sum=sales.reduce((a,b)=>a+b.total,0);document.getElementById('today-sell').innerText=sum+' ৳';document.getElementById('sales-history').innerHTML=sales.slice().reverse().map(s=>`<div class="border-b py-2 flex justify-between text-sm"><span>${s.time}<br><b>${s.customer}</b> (${s.type=='due'?'বাকি':'নগদ'})</span><span class="font-bold">${s.total}৳</span></div>`).join('')||'<p class="text-center text-gray-400">কোনো বিক্রি নেই</p>';}
+renderProducts();renderCart();renderDue();
 </script>
 </body>
 </html>
